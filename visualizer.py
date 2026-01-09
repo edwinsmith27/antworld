@@ -167,7 +167,7 @@ class AntWorldVisualizer:
             self.fig, self.update,
             frames=num_steps,
             interval=interval,
-            blit=True,
+            blit=False,  # Disable blitting to ensure food is drawn correctly
             repeat=False
         )
         
