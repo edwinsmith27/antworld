@@ -439,11 +439,15 @@
         }
 
         async function startSimulation() {
+            console.log('Start button clicked');
             try {
                 // Make sure config is loaded
                 if (!config) {
+                    console.log('Config not loaded, loading now...');
                     await loadConfig();
                 }
+                
+                console.log('Sending start request with config:', config);
 
                 // Start simulation on server
                 const response = await fetch('/api/start', { 
@@ -452,6 +456,8 @@
                         'Content-Type': 'application/json',
                     }
                 });
+                
+                console.log('Start response status:', response.status);
                 
                 if (response.ok) {
                     const data = await response.json();
@@ -474,8 +480,10 @@
                         }
                     }, config.speed);
                 } else {
-                    console.error('Failed to start simulation');
-                    alert('Failed to start simulation. Please try again.');
+                    console.error('Failed to start simulation, status:', response.status);
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    alert('Failed to start simulation. Please check the console for details.');
                 }
             } catch (error) {
                 console.error('Error starting simulation:', error);
