@@ -52,6 +52,9 @@ class AntWorldVisualizer:
         
     def initialize_ants(self):
         """Initialize ant visual elements."""
+        # Initialize food artists list
+        self.food_artists = []
+        
         colors = plt.cm.rainbow(np.linspace(0, 1, len(self.world.ants)))
         
         for i, ant in enumerate(self.world.ants):
@@ -158,6 +161,7 @@ class AntWorldVisualizer:
             interval: Milliseconds between frames
         """
         self.initialize_ants()
+        self.draw_food()  # Draw initial food
         
         anim = FuncAnimation(
             self.fig, self.update,
@@ -183,7 +187,7 @@ class AntWorldVisualizer:
         plt.show()
 
 
-def visualize_simulation(num_ants=5, num_steps=200, world_width=50, world_height=50, interval=0, enable_visualization=True):
+def visualize_simulation(num_ants=20, num_steps=200, world_width=500, world_height=500, interval=0, enable_visualization=True):
     """
     Run a visualized ant world simulation.
     
