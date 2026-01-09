@@ -345,8 +345,13 @@
     </div>
 
     <script>
+        console.log('Script loading...');
+        
         const canvas = document.getElementById('worldCanvas');
         const ctx = canvas.getContext('2d');
+        
+        console.log('Canvas:', canvas);
+        console.log('Context:', ctx);
         
         let simulationInterval = null;
         let config = null;
@@ -746,14 +751,23 @@
 
         // Initialize slider event listeners
         function initializeSliders() {
+            console.log('Initializing sliders...');
             const sliders = ['numAnts', 'worldWidth', 'worldHeight', 'speed'];
             sliders.forEach(sliderId => {
                 const slider = document.getElementById(sliderId);
-                slider.addEventListener('input', function() {
-                    const valueSpan = document.getElementById(sliderId + 'Value');
-                    valueSpan.textContent = this.value;
-                });
+                const valueSpan = document.getElementById(sliderId + 'Value');
+                console.log(`Slider ${sliderId}:`, slider, 'Value span:', valueSpan);
+                
+                if (slider && valueSpan) {
+                    slider.addEventListener('input', function() {
+                        console.log(`Slider ${sliderId} changed to:`, this.value);
+                        valueSpan.textContent = this.value;
+                    });
+                } else {
+                    console.error(`Missing element for slider ${sliderId}`);
+                }
             });
+            console.log('Sliders initialized');
         }
 
         // Load initial state
@@ -794,8 +808,14 @@
 
         // Load state on page load
         window.addEventListener('load', async () => {
-            initializeSliders();
-            await loadInitialState();
+            console.log('Page loaded, starting initialization...');
+            try {
+                initializeSliders();
+                await loadInitialState();
+                console.log('Initialization complete');
+            } catch (error) {
+                console.error('Error during initialization:', error);
+            }
         });
 
         // Clean up on page unload
