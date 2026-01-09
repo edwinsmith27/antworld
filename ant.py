@@ -137,6 +137,37 @@ class Ant:
         self.health = max_health
         self.food_collected = 0
         self.health_decay_rate = 0.5  # Health lost per step
+        self.birth_step = 0  # Track when ant was born/respawned
+        
+    def get_fitness(self):
+        """
+        Calculate fitness/success score for this ant.
+        
+        The fitness score is a composite metric that considers:
+        - Food collected (most important - survival)
+        - Steps survived
+        - Distance traveled (exploration)
+        - Current health
+        
+        Returns:
+            float: Fitness score (higher is better)
+        """
+        # Base fitness from food collection (each food is worth 100 points)
+        food_score = self.food_collected * 100
+        
+        # Survival bonus (1 point per step survived)
+        survival_score = self.steps_taken
+        
+        # Exploration bonus (0.1 points per unit distance)
+        exploration_score = self.distance_traveled * 0.1
+        
+        # Health bonus (current health percentage * 10)
+        health_score = (self.health / self.max_health) * 10 if self.max_health > 0 else 0
+        
+        # Total fitness
+        fitness = food_score + survival_score + exploration_score + health_score
+        
+        return fitness
         
     def sense(self):
         """

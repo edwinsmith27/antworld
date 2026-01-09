@@ -125,6 +125,7 @@ def step_simulation():
                     y = float(ant.y) if np.isfinite(ant.y) else 0.0
                     distance = float(ant.distance_traveled) if np.isfinite(ant.distance_traveled) else 0.0
                     health = float(ant.health) if np.isfinite(ant.health) else 0.0
+                    fitness = float(ant.get_fitness()) if np.isfinite(ant.get_fitness()) else 0.0
                     
                     ants_data.append({
                         'id': i,
@@ -134,7 +135,8 @@ def step_simulation():
                         'steps_taken': ant.steps_taken,
                         'health': health,
                         'max_health': float(ant.max_health),
-                        'food_collected': ant.food_collected
+                        'food_collected': ant.food_collected,
+                        'fitness': fitness
                     })
                 
                 # Get food data
@@ -206,7 +208,8 @@ def get_state():
                 'steps_taken': ant.steps_taken,
                 'health': float(ant.health),
                 'max_health': float(ant.max_health),
-                'food_collected': ant.food_collected
+                'food_collected': ant.food_collected,
+                'fitness': float(ant.get_fitness())
             })
         
         # Get food data

@@ -332,6 +332,11 @@
                 <div class="stat-value" id="foodCount">0</div>
             </div>
 
+            <div class="stat-item">
+                <div class="stat-label">⭐ Best Fitness</div>
+                <div class="stat-value" id="bestFitness">0</div>
+            </div>
+
             <h2 style="margin-top: 30px;">🐜 Ant Details</h2>
             <div class="ant-list" id="antList">
                 <p style="color: #aaa; text-align: center; padding: 20px;">No simulation running</p>
@@ -612,6 +617,13 @@
             const worldHeight = state.world.height || (config ? config.world_height : 50);
             document.getElementById('worldSize').textContent = `${worldWidth} × ${worldHeight}`;
             document.getElementById('foodCount').textContent = state.food ? state.food.length : 0;
+            
+            // Calculate and display best fitness
+            let bestFitness = 0;
+            if (state.ants.length > 0) {
+                bestFitness = Math.max(...state.ants.map(ant => ant.fitness || 0));
+            }
+            document.getElementById('bestFitness').textContent = bestFitness.toFixed(1);
 
             // Update ant list
             if (state.ants.length > 0) {
@@ -623,7 +635,8 @@
                             Distance: ${ant.distance_traveled.toFixed(2)}<br>
                             Steps: ${ant.steps_taken}<br>
                             Health: ${ant.health.toFixed(1)}/${ant.max_health.toFixed(1)}<br>
-                            Food: ${ant.food_collected}
+                            Food: ${ant.food_collected}<br>
+                            <strong>⭐ Fitness: ${ant.fitness.toFixed(1)}</strong>
                         </div>
                     </div>
                 `).join('');
