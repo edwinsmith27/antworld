@@ -667,11 +667,7 @@
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Use state world dimensions if available, otherwise use config
-            const worldWidth = state.world.width || (config ? config.world_width : 50);
-            const worldHeight = state.world.height || (config ? config.world_height : 50);
-
-            // Calculate scale
+            // Calculate scale (worldWidth and worldHeight already defined above)
             const scale = Math.min(
                 canvas.width / worldWidth,
                 canvas.height / worldHeight
