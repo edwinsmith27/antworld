@@ -6,9 +6,14 @@ from ant import Ant
 import numpy as np
 import threading
 import time
+import logging
 
 app = Flask(__name__)
 CORS(app)
+
+# Disable Flask request logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 # Global simulation state
 simulation_state = {
@@ -216,4 +221,4 @@ if __name__ == '__main__':
     print("Open your browser to: http://localhost:5000")
     print("\nPress Ctrl+C to stop the server")
     print("=" * 50)
-    run_app(debug=True)
+    run_app(debug=False)  # Set debug=False to reduce logging
