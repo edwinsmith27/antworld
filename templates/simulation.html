@@ -326,6 +326,11 @@
                 <div class="stat-value" id="worldSize">0 × 0</div>
             </div>
 
+            <div class="stat-item">
+                <div class="stat-label">🍃 Food Items</div>
+                <div class="stat-value" id="foodCount">0</div>
+            </div>
+
             <h2 style="margin-top: 30px;">🐜 Ant Details</h2>
             <div class="ant-list" id="antList">
                 <p style="color: #aaa; text-align: center; padding: 20px;">No simulation running</p>
@@ -625,6 +630,21 @@
             ctx.lineWidth = 3;
             ctx.strokeRect(0, 0, worldWidth * scale, worldHeight * scale);
 
+            // Draw food
+            if (state.food && state.food.length > 0) {
+                state.food.forEach(food => {
+                    ctx.fillStyle = '#4CAF50'; // Green color for food
+                    ctx.beginPath();
+                    ctx.arc(food.x * scale, food.y * scale, 0.8 * scale, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Food outline
+                    ctx.strokeStyle = '#2E7D32';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                });
+            }
+
             // Draw ants
             state.ants.forEach((ant, index) => {
                 const color = getAntColor(index);
@@ -652,6 +672,7 @@
             document.getElementById('stepCount').textContent = state.step;
             document.getElementById('antCount').textContent = state.ants.length;
             document.getElementById('worldSize').textContent = `${worldWidth} × ${worldHeight}`;
+            document.getElementById('foodCount').textContent = state.food ? state.food.length : 0;
 
             // Update ant list
             if (state.ants.length > 0) {
