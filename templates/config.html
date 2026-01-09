@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ant World - Configuration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        input[type="number"],
+        input[type="range"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        input[type="range"] {
+            padding: 0;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #ddd;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        .range-value {
+            display: inline-block;
+            margin-left: 10px;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #555;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            color: #666;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐜 Ant World</h1>
+        <p class="subtitle">Neural Network Simulation</p>
+
+        <form id="configForm">
+            <div class="form-group">
+                <label for="num_ants">Number of Ants</label>
+                <input type="number" id="num_ants" name="num_ants" min="1" max="50" value="5">
+            </div>
+
+            <div class="form-group">
+                <label for="world_width">World Width</label>
+                <input type="number" id="world_width" name="world_width" min="20" max="200" value="50">
+            </div>
+
+            <div class="form-group">
+                <label for="world_height">World Height</label>
+                <input type="number" id="world_height" name="world_height" min="20" max="200" value="50">
+            </div>
+
+            <div class="form-group">
+                <label for="speed">
+                    Simulation Speed
+                    <span class="range-value" id="speedValue">50 ms</span>
+                </label>
+                <input type="range" id="speed" name="speed" min="10" max="200" value="50">
+            </div>
+
+            <div class="button-group">
+                <button type="button" class="btn-secondary" onclick="loadDefaults()">Reset to Defaults</button>
+                <button type="submit" class="btn-primary">Start Simulation</button>
+            </div>
+        </form>
+
+        <div class="info-box">
+            <h3>How it works:</h3>
+            <ul>
+                <li>Each ant has its own neural network "brain"</li>
+                <li>Ants sense their environment and make decisions</li>
+                <li>Watch them learn and navigate the world!</li>
+                <li>Lower speed = faster simulation</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Update speed value display
+        const speedInput = document.getElementById('speed');
+        const speedValue = document.getElementById('speedValue');
+        
+        speedInput.addEventListener('input', function() {
+            speedValue.textContent = this.value + ' ms';
+        });
+
+        // Load defaults
+        function loadDefaults() {
+            document.getElementById('num_ants').value = 5;
+            document.getElementById('world_width').value = 50;
+            document.getElementById('world_height').value = 50;
+            document.getElementById('speed').value = 50;
+            speedValue.textContent = '50 ms';
+        }
+
+        // Handle form submission
+        document.getElementById('configForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const config = {
+                num_ants: parseInt(document.getElementById('num_ants').value),
+                world_width: parseInt(document.getElementById('world_width').value),
+                world_height: parseInt(document.getElementById('world_height').value),
+                speed: parseInt(document.getElementById('speed').value)
+            };
+
+            try {
+                // Save config
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(config)
+                });
+
+                if (response.ok) {
+                    // Redirect to simulation page
+                    window.location.href = '/simulation';
+                } else {
+                    alert('Error saving configuration');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error connecting to server');
+            }
+        });
+    </script>
+</body>
+</html>

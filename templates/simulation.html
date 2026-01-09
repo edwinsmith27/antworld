@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ant World - Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            text-align: center;
+            font-size: 2em;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-start {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-start:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-stop {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-stop:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .btn-reset {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-reset:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+
+        .btn-config {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-config:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .main-content {
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .canvas-container {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        #worldCanvas {
+            display: block;
+            max-width: 100%;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .stats-panel {
+            width: 320px;
+            background: #16213e;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .stats-panel h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .config-panel {
+            background: #0f3460;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .config-item {
+            margin-bottom: 15px;
+        }
+
+        .config-item label {
+            display: block;
+            color: #aaa;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .config-item input[type="range"] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #1a1a2e;
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .config-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #667eea;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .config-item input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #667eea;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        .config-value {
+            display: inline-block;
+            color: #667eea;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .stat-item {
+            background: #0f3460;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-label {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: white;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .ant-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .ant-item {
+            background: #0f3460;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .ant-item h4 {
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+
+        .ant-info {
+            font-size: 0.85em;
+            color: #ccc;
+            line-height: 1.6;
+        }
+
+        /* Scrollbar styles */
+        .ant-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .ant-list::-webkit-scrollbar-track {
+            background: #0f3460;
+            border-radius: 4px;
+        }
+
+        .ant-list::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .stats-panel {
+                width: 100%;
+            }
+
+            .config-panel {
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🐜 Ant World Simulation</h1>
+    </div>
+
+    <div class="controls">
+        <button class="btn-start" onclick="startSimulation()">▶ Start</button>
+        <button class="btn-stop" onclick="stopSimulation()">⏸ Stop</button>
+        <button class="btn-reset" onclick="resetSimulation()">🔄 Reset</button>
+    </div>
+
+    <div class="main-content">
+        <div class="canvas-container">
+            <canvas id="worldCanvas" width="800" height="800"></canvas>
+        </div>
+
+        <div class="stats-panel">
+            <h2>⚙️ Configuration</h2>
+            
+            <div class="config-panel">
+                <div class="config-item">
+                    <label>
+                        Number of Ants: 
+                        <span class="config-value" id="numAntsValue">5</span>
+                    </label>
+                    <input type="range" id="numAnts" min="1" max="20" value="5" onchange="updateConfig()">
+                </div>
+
+                <div class="config-item">
+                    <label>
+                        World Width: 
+                        <span class="config-value" id="worldWidthValue">50</span>
+                    </label>
+                    <input type="range" id="worldWidth" min="20" max="100" value="50" onchange="updateConfig()">
+                </div>
+
+                <div class="config-item">
+                    <label>
+                        World Height: 
+                        <span class="config-value" id="worldHeightValue">50</span>
+                    </label>
+                    <input type="range" id="worldHeight" min="20" max="100" value="50" onchange="updateConfig()">
+                </div>
+
+                <div class="config-item">
+                    <label>
+                        Speed (ms): 
+                        <span class="config-value" id="speedValue">50</span>
+                    </label>
+                    <input type="range" id="speed" min="10" max="200" value="50" onchange="updateConfig()">
+                </div>
+            </div>
+
+            <h2>📊 Statistics</h2>
+            
+            <div class="stat-item">
+                <div class="stat-label">Simulation Step</div>
+                <div class="stat-value" id="stepCount">0</div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-label">Total Ants</div>
+                <div class="stat-value" id="antCount">0</div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-label">World Size</div>
+                <div class="stat-value" id="worldSize">0 × 0</div>
+            </div>
+
+            <h2 style="margin-top: 30px;">🐜 Ant Details</h2>
+            <div class="ant-list" id="antList">
+                <p style="color: #aaa; text-align: center; padding: 20px;">No simulation running</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('worldCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let simulationInterval = null;
+        let config = null;
+        let isRunning = false;
+
+        // Ant colors (rainbow)
+        const colorPalette = [
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', 
+            '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2',
+            '#F8B739', '#52B788', '#E85D75', '#6C5CE7'
+        ];
+
+        function getAntColor(index) {
+            return colorPalette[index % colorPalette.length];
+        }
+
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                config = await response.json();
+                console.log('Loaded config:', config);
+                
+                // Update slider values and displays
+                document.getElementById('numAnts').value = config.num_ants || 5;
+                document.getElementById('numAntsValue').textContent = config.num_ants || 5;
+                
+                document.getElementById('worldWidth').value = config.world_width || 50;
+                document.getElementById('worldWidthValue').textContent = config.world_width || 50;
+                
+                document.getElementById('worldHeight').value = config.world_height || 50;
+                document.getElementById('worldHeightValue').textContent = config.world_height || 50;
+                
+                document.getElementById('speed').value = config.speed || 50;
+                document.getElementById('speedValue').textContent = config.speed || 50;
+            } catch (error) {
+                console.error('Error loading config:', error);
+                // Use defaults if loading fails
+                config = {
+                    num_ants: 5,
+                    world_width: 50,
+                    world_height: 50,
+                    speed: 50
+                };
+            }
+        }
+
+        function updateConfig() {
+            // Get values from sliders
+            const numAnts = parseInt(document.getElementById('numAnts').value);
+            const worldWidth = parseInt(document.getElementById('worldWidth').value);
+            const worldHeight = parseInt(document.getElementById('worldHeight').value);
+            const speed = parseInt(document.getElementById('speed').value);
+            
+            // Update display values
+            document.getElementById('numAntsValue').textContent = numAnts;
+            document.getElementById('worldWidthValue').textContent = worldWidth;
+            document.getElementById('worldHeightValue').textContent = worldHeight;
+            document.getElementById('speedValue').textContent = speed;
+            
+            // Update config object
+            config = {
+                num_ants: numAnts,
+                world_width: worldWidth,
+                world_height: worldHeight,
+                speed: speed,
+                food_spawn_rate: config?.food_spawn_rate || 0.1,
+                health_decay_rate: config?.health_decay_rate || 0.5,
+                max_health: config?.max_health || 100
+            };
+            
+            // Save config to server
+            fetch('/api/config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(config)
+            }).catch(error => console.error('Error saving config:', error));
+            
+            // If simulation is running, update the interval speed
+            if (isRunning && simulationInterval) {
+                clearInterval(simulationInterval);
+                simulationInterval = setInterval(async () => {
+                    if (isRunning) {
+                        await stepSimulation();
+                    }
+                }, speed);
+            }
+        }
+
+        async function startSimulation() {
+            try {
+                // Make sure config is loaded
+                if (!config) {
+                    await loadConfig();
+                }
+
+                // Start simulation on server
+                const response = await fetch('/api/start', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Simulation started:', data);
+                    
+                    isRunning = true;
+                    
+                    // Clear any existing interval
+                    if (simulationInterval) {
+                        clearInterval(simulationInterval);
+                    }
+
+                    // Get initial state
+                    await updateState();
+
+                    // Start animation loop
+                    simulationInterval = setInterval(async () => {
+                        if (isRunning) {
+                            await stepSimulation();
+                        }
+                    }, config.speed);
+                } else {
+                    console.error('Failed to start simulation');
+                    alert('Failed to start simulation. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error starting simulation:', error);
+                alert('Error starting simulation: ' + error.message);
+            }
+        }
+
+        async function stopSimulation() {
+            try {
+                isRunning = false;
+                
+                if (simulationInterval) {
+                    clearInterval(simulationInterval);
+                    simulationInterval = null;
+                }
+                
+                const response = await fetch('/api/stop', { method: 'POST' });
+                const data = await response.json();
+                console.log('Simulation stopped:', data);
+            } catch (error) {
+                console.error('Error stopping simulation:', error);
+            }
+        }
+
+        async function resetSimulation() {
+            try {
+                await stopSimulation();
+                
+                const response = await fetch('/api/reset', { method: 'POST' });
+                const data = await response.json();
+                console.log('Simulation reset:', data);
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw empty world with config dimensions
+                if (config) {
+                    drawEmptyWorld();
+                }
+                
+                // Reset stats
+                document.getElementById('stepCount').textContent = '0';
+                document.getElementById('antCount').textContent = '0';
+                if (config) {
+                    document.getElementById('worldSize').textContent = `${config.world_width} × ${config.world_height}`;
+                } else {
+                    document.getElementById('worldSize').textContent = '0 × 0';
+                }
+                document.getElementById('antList').innerHTML = '<p style="color: #aaa; text-align: center; padding: 20px;">No simulation running</p>';
+            } catch (error) {
+                console.error('Error resetting simulation:', error);
+            }
+        }
+
+        async function stepSimulation() {
+            try {
+                const response = await fetch('/api/step', { method: 'POST' });
+                const state = await response.json();
+                
+                if (state.error) {
+                    console.log('Simulation error:', state.error);
+                    await stopSimulation();
+                    return;
+                }
+
+                updateVisualization(state);
+            } catch (error) {
+                console.error('Error stepping simulation:', error);
+                await stopSimulation();
+            }
+        }
+
+        async function updateState() {
+            try {
+                const response = await fetch('/api/state');
+                const state = await response.json();
+                updateVisualization(state);
+            } catch (error) {
+                console.error('Error updating state:', error);
+            }
+        }
+
+        function drawEmptyWorld() {
+            if (!config) return;
+            
+            const scale = Math.min(
+                canvas.width / config.world_width,
+                canvas.height / config.world_height
+            );
+
+            // Draw world background
+            ctx.fillStyle = '#E3F2FD';
+            ctx.fillRect(0, 0, config.world_width * scale, config.world_height * scale);
+
+            // Draw grid
+            ctx.strokeStyle = '#BBDEFB';
+            ctx.lineWidth = 0.5;
+            const gridSize = 5;
+            
+            for (let x = 0; x <= config.world_width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x * scale, 0);
+                ctx.lineTo(x * scale, config.world_height * scale);
+                ctx.stroke();
+            }
+            
+            for (let y = 0; y <= config.world_height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y * scale);
+                ctx.lineTo(config.world_width * scale, y * scale);
+                ctx.stroke();
+            }
+
+            // Draw world border
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(0, 0, config.world_width * scale, config.world_height * scale);
+        }
+
+        function updateVisualization(state) {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Use state world dimensions if available, otherwise use config
+            const worldWidth = state.world.width || (config ? config.world_width : 50);
+            const worldHeight = state.world.height || (config ? config.world_height : 50);
+
+            // Calculate scale
+            const scale = Math.min(
+                canvas.width / worldWidth,
+                canvas.height / worldHeight
+            );
+
+            // Draw world background
+            ctx.fillStyle = '#E3F2FD';
+            ctx.fillRect(0, 0, worldWidth * scale, worldHeight * scale);
+
+            // Draw grid
+            ctx.strokeStyle = '#BBDEFB';
+            ctx.lineWidth = 0.5;
+            const gridSize = 5;
+            
+            for (let x = 0; x <= worldWidth; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x * scale, 0);
+                ctx.lineTo(x * scale, worldHeight * scale);
+                ctx.stroke();
+            }
+            
+            for (let y = 0; y <= worldHeight; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y * scale);
+                ctx.lineTo(worldWidth * scale, y * scale);
+                ctx.stroke();
+            }
+
+            // Draw world border
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(0, 0, worldWidth * scale, worldHeight * scale);
+
+            // Draw ants
+            state.ants.forEach((ant, index) => {
+                const color = getAntColor(index);
+                
+                // Ant body
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(ant.x * scale, ant.y * scale, 0.8 * scale, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Ant outline
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Ant number
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${0.6 * scale}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(index + 1, ant.x * scale, ant.y * scale);
+            });
+
+            // Update stats
+            document.getElementById('stepCount').textContent = state.step;
+            document.getElementById('antCount').textContent = state.ants.length;
+            document.getElementById('worldSize').textContent = `${worldWidth} × ${worldHeight}`;
+
+            // Update ant list
+            if (state.ants.length > 0) {
+                const antListHtml = state.ants.map((ant, index) => `
+                    <div class="ant-item" style="border-left-color: ${getAntColor(index)}">
+                        <h4>🐜 Ant ${index + 1}</h4>
+                        <div class="ant-info">
+                            Position: (${ant.x.toFixed(1)}, ${ant.y.toFixed(1)})<br>
+                            Distance: ${ant.distance_traveled.toFixed(2)}<br>
+                            Steps: ${ant.steps_taken}
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('antList').innerHTML = antListHtml;
+            } else {
+                document.getElementById('antList').innerHTML = '<p style="color: #aaa; text-align: center; padding: 20px;">Click Start to begin simulation</p>';
+            }
+        }
+
+        function goToConfig() {
+            stopSimulation();
+            window.location.href = '/';
+        }
+
+        // Initialize slider event listeners
+        function initializeSliders() {
+            const sliders = ['numAnts', 'worldWidth', 'worldHeight', 'speed'];
+            sliders.forEach(sliderId => {
+                const slider = document.getElementById(sliderId);
+                slider.addEventListener('input', function() {
+                    const valueSpan = document.getElementById(sliderId + 'Value');
+                    valueSpan.textContent = this.value;
+                });
+            });
+        }
+
+        // Load initial state
+        async function loadInitialState() {
+            try {
+                // Load config first
+                await loadConfig();
+                
+                // Then load state
+                const response = await fetch('/api/state');
+                const state = await response.json();
+                
+                console.log('Initial state loaded:', state);
+                
+                // Update config if provided in state
+                if (state.config) {
+                    config = state.config;
+                }
+                
+                // Draw initial world
+                if (state.ants.length > 0) {
+                    updateVisualization(state);
+                    isRunning = state.running;
+                } else {
+                    drawEmptyWorld();
+                    // Show initial stats
+                    if (config) {
+                        document.getElementById('worldSize').textContent = `${config.world_width} × ${config.world_height}`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading initial state:', error);
+                // Draw empty world anyway
+                await loadConfig();
+                drawEmptyWorld();
+            }
+        }
+
+        // Load state on page load
+        window.addEventListener('load', async () => {
+            initializeSliders();
+            await loadInitialState();
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (simulationInterval) {
+                clearInterval(simulationInterval);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -17,16 +17,45 @@ Ant World is a simulation environment where:
 - Movement system with boundary collision
 - Learning mechanism through neural network mutation
 - Statistics tracking (distance traveled, steps taken)
+- **Web-based UI** with configuration page and real-time visualization
+- **Interactive controls** to start, stop, and reset simulation
+- Real-time visualization showing ants navigating the world with colored trails
 
 ## Installation
 
-```bash
+```
+
+Requirements:
+- numpy>=1.21.0
+- matplotlib>=3.3.0
+- flask>=2.0.0
+- flask-cors>=3.0.0bash
 pip install -r requirements.txt
 ```
 
 ## Usage
 
-Run the simulation:
+**Run the web-based simulation (recommended):**
+
+```bash
+python web_app.py
+```
+
+Then open your browser to http://localhost:5000
+
+The web UI provides:
+- Configuration page to set simulation parameters
+- Real-time visualization with animated ants
+- Live statistics and ant tracking
+- Interactive controls (start, stop, reset)
+
+Run the simulation with matplotlib visualization:
+
+```bash
+python main_visual.py
+```
+
+Run the simulation (console only):
 
 ```bash
 python main.py
@@ -34,15 +63,21 @@ python main.py
 
 Run tests:
 
-```bash
-python -m unittest test_antworld.py
-```
+```bweb_app.py**: Flask web application with REST API
+- **templates/**: HTML templates for web UI
+  - **config.html**: Configuration page
+  - **simulation.html**: Real-time visualization page
+- **main.py**: Main simulation runner (console output)
+- **main_visual.py**: Visual simulation runner with matplotlib
+- **visualizer.py**: Visualization module for matplotlib
 
 ## Architecture
 
 - **world.py**: World class representing the environment
 - **ant.py**: Ant class with neural network for navigation
-- **main.py**: Main simulation runner
+- **main.py**: Main simulation runner (console output)
+- **main_visual.py**: Visual simulation runner with matplotlib
+- **visualizer.py**: Visualization module for real-time display
 - **test_antworld.py**: Unit tests for all components
 
 ## How It Works

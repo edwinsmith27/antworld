@@ -58,13 +58,14 @@ class NeuralNetwork:
 class Ant:
     """An ant agent that uses a neural network to navigate the world."""
     
-    def __init__(self, x=0, y=0):
+    def __init__(self, x=0, y=0, max_health=100):
         """
         Initialize an ant.
         
         Args:
             x: Initial x position
             y: Initial y position
+            max_health: Maximum health value
         """
         self.x = x
         self.y = y
@@ -72,6 +73,10 @@ class Ant:
         self.brain = NeuralNetwork(input_size=4, hidden_size=8, output_size=4)
         self.steps_taken = 0
         self.distance_traveled = 0.0
+        self.max_health = max_health
+        self.health = max_health
+        self.food_collected = 0
+        self.health_decay_rate = 0.5  # Health lost per step
         
     def sense(self):
         """
@@ -127,6 +132,10 @@ class Ant:
         # Perform action
         self.act(action)
         self.steps_taken += 1
+        
+        # Decrease health over time
+        self.health -= self.health_decay_rate
+        self.health = max(0, self.health)  # Don't go below 0
     
     def learn(self):
         """Apply learning by mutating the neural network."""
