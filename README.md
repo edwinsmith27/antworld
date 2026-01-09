@@ -1,6 +1,6 @@
 # antworld
 
-An neural network simulation for ant world where ants with neural networks learn to navigate their environment.
+A neural network simulation for ant world where ants with neural networks learn to navigate their environment.
 
 ## Overview
 
