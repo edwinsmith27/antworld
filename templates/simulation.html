@@ -574,7 +574,6 @@
                 // Update visualization
                 updateCounter++;
                 // Update stats every frame, but ant list less frequently
-                updateVisualization(state, updateCounter % 10 === 0);/ Update stats every frame, but ant list less frequently
                 updateVisualization(state, updateCounter % 10 === 0);
             } catch (error) {
                 console.error('Error stepping simulation:', error);
