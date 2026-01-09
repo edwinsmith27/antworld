@@ -42,6 +42,24 @@ class NeuralNetwork:
         exp_output = np.exp(output - np.max(output))
         return exp_output / exp_output.sum()
     
+    def copy(self):
+        """
+        Create a deep copy of this neural network.
+        
+        Returns:
+            A new NeuralNetwork instance with copied weights
+        """
+        new_nn = NeuralNetwork(
+            input_size=self.input_size,
+            hidden_size=self.hidden_size,
+            output_size=self.output_size
+        )
+        new_nn.weights_input_hidden = self.weights_input_hidden.copy()
+        new_nn.weights_hidden_output = self.weights_hidden_output.copy()
+        new_nn.bias_hidden = self.bias_hidden.copy()
+        new_nn.bias_output = self.bias_output.copy()
+        return new_nn
+    
     def mutate(self, mutation_rate=0.1, mutation_scale=0.1):
         """
         Mutate network weights for learning/evolution.
