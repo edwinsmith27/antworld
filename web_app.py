@@ -109,13 +109,99 @@ def reset_simulation():
 
 @app.route('/api/step', methods=['POST'])
 def step_simulation():
-    """Advance the simulation by one step."""
+    """Advance the simulation by one or more steps."""
     with simulation_lock:
         if simulation_state['world'] and simulation_state['running']:
             try:
-                simulation_state['world'].step()
-                simulation_state['step'] += 1
-                # Get state and return it
+                # Get number of steps from request, default to 1
+                data = request.get_json() or {}
+                num_steps = data.get('steps', 1)
+                num_steps = min(max(1, int(num_steps)), 100)  # Limit to 1-100 steps
+                
+                # Run multiple steps
+                for _ in range(num_steps):
+                    simulation_state['world'].step()
+                    simulation_state['step'] += 1
+                
+                # Get state and return it (only after all steps)
+                world = simulation_state['world']
+                ants_data = []
+                
+                for i, ant in enumerate(world.ants):
+                    # Ensure values are valid (not NaN or infinity)
+                    x = float(ant.x) if np.isfinite(ant.x) else 0.0
+                    y = float(ant.y) if np.isfinite(ant.y) else 0.0
+                    distance = float(ant.distance_traveled) if np.isfinite(ant.distance_traveled) else 0.0
+                    health = float(ant.health) if np.isfinite(ant.health) else 0.0
+                    fitness = float(ant.get_fitness()) if np.isfinite(ant.get_fitness()) else 0.0
+                    
+                    ants_data.append({
+                        'id': i,
+                        'x': x,
+                        'y': y,
+                        'distance_traveled': distance,
+                        'steps_taken': ant.steps_taken,
+                        'health': health,
+                        'max_health': float(ant.max_health),
+                        'food_collected': ant.food_collected,
+                        'fitness': fitness
+                    })
+                
+                # Get food data
+                food_data = []
+                for food in world.food:
+                    food_x = float(food.x) if np.isfinite(food.x) else 0.0
+                    food_y = float(food.y) if np.isfinite(food.y) else 0.0
+                    food_data.append({
+                        'x': food_x,
+                        'y': food_y,
+                        'energy': float(food.energy)
+                    })
+                
+                return jsonify({
+                    'running': simulation_state['running'],
+                    'step': simulation_state['step'],
+                    'ants': ants_data,
+                    'food': food_data,
+                    'world': {
+                        'width': world.width,
+                        'height': world.height
+                    },
+                    'config': simulation_state['config']
+                })
+            except Exception as e:
+                log.error(f"Error in simulation step {simulation_state['step']}: {str(e)}")
+                # Don't stop the simulation, just log the error and continue
+                return jsonify({
+                    'running': simulation_state['running'],
+                    'step': simulation_state['step'],
+                    'ants': [],
+                    'food': [],
+                    'world': {
+                        'width': simulation_state['config']['world_width'],
+                        'height': simulation_state['config']['world_height']
+                    },
+                    'config': simulation_state['config']
+                })
+        return jsonify({'error': 'Simulation not running'})
+
+
+@app.route('/api/step_multiple', methods=['POST'])
+def step_multiple():
+    """Advance the simulation by multiple steps."""
+    with simulation_lock:
+        if simulation_state['world'] and simulation_state['running']:
+            try:
+                # Get number of steps from request
+                data = request.get_json() or {}
+                num_steps = min(int(data.get('steps', 1)), 100)  # Cap at 100 for safety
+                
+                # Run multiple steps
+                for _ in range(num_steps):
+                    simulation_state['world'].step()
+                    simulation_state['step'] += 1
+                
+                # Get state and return it (only once after all steps)
                 world = simulation_state['world']
                 ants_data = []
                 

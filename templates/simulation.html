@@ -304,9 +304,9 @@
                 <div class="config-item">
                     <label>
                         Speed (ms): 
-                        <span class="config-value" id="speedValue">0</span>
+                        <span class="config-value" id="speedValue">10</span>
                     </label>
-                    <input type="range" id="speed" min="0" max="100" value="0" onchange="updateConfig()">
+                    <input type="range" id="speed" min="10" max="100" value="10" onchange="updateConfig()">
                 </div>
 
                 <div class="config-item">
@@ -555,24 +555,27 @@
 
         async function stepSimulation() {
             try {
-                // Run multiple steps per frame for speed
-                for (let i = 0; i < stepsPerFrame; i++) {
-                    const response = await fetch('/api/step', { method: 'POST' });
-                    const state = await response.json();
-                    
-                    if (state.error) {
-                        console.log('Simulation error:', state.error);
-                        await stopSimulation();
-                        return;
-                    }
-
-                    // Only update visualization on the last step
-                    if (i === stepsPerFrame - 1) {
-                        updateCounter++;
-                        // Update stats every frame, but ant list less frequently
-                        updateVisualization(state, updateCounter % 10 === 0);
-                    }
+                // Use the new step_muin a single request
+                const response = await fetch('/api/step', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ steps: stepsPerFrame })
+                });
+                const state = await response.json();
+                
+                if (state.error) {
+                    console.log('Simulation error:', state.error);
+                    await stopSimulation();
+                    return;
                 }
+
+                // Update visualization
+                updateCounter++;
+                // Update stats every frame, but ant list less frequently
+                updateVisualization(state, updateCounter % 10 === 0);/ Update stats every frame, but ant list less frequently
+                updateVisualization(state, updateCounter % 10 === 0);
             } catch (error) {
                 console.error('Error stepping simulation:', error);
                 // Don't stop simulation on transient errors, just log them
