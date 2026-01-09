@@ -22,7 +22,7 @@ class Food:
 class World:
     """A 2D world space where ants can navigate."""
     
-    def __init__(self, width=100, height=100, food_spawn_rate=0.1):
+    def __init__(self, width=100, height=100, food_spawn_rate=0.1, initial_food_count=20):
         """
         Initialize the world.
         
@@ -30,6 +30,7 @@ class World:
             width: Width of the world
             height: Height of the world
             food_spawn_rate: Probability of spawning food each step (0-1)
+            initial_food_count: Number of food items to place initially
         """
         self.width = width
         self.height = height
@@ -38,10 +39,21 @@ class World:
         self.food_spawn_rate = food_spawn_rate
         self.step_count = 0
         
+        # Place initial food
+        self._place_initial_food(initial_food_count)
+        
     def add_ant(self, ant):
         """Add an ant to the world."""
         self.ants.append(ant)
         ant.world = self
+    
+    def _place_initial_food(self, count):
+        """Place initial food items at random positions."""
+        for _ in range(count):
+            x = np.random.randint(0, self.width)
+            y = np.random.randint(0, self.height)
+            food = Food(x, y, energy=np.random.randint(30, 70))
+            self.food.append(food)
         
     def spawn_food(self):
         """Randomly spawn food in the world."""
@@ -90,9 +102,13 @@ class World:
             if ant.health <= 0:
                 dead_ants.append(ant)
         
-        # Respawn dead ants
+        # Respawn dead ants and clean up properly
         for dead_ant in dead_ants:
             self.ants.remove(dead_ant)
+            # Clean up references to prevent memory leaks
+            dead_ant.world = None
+            dead_ant.brain = None
+            # Respawn new ant
             new_ant = self.respawn_ant(dead_ant)
             self.add_ant(new_ant)
             

@@ -69,6 +69,24 @@ class AntWorldVisualizer:
             
             # Initialize history with starting position
             self.ant_histories[i].append((ant.x, ant.y))
+    
+    def draw_food(self):
+        """Draw food items on the plot."""
+        # Remove old food artists
+        if hasattr(self, 'food_artists'):
+            for artist in self.food_artists:
+                artist.remove()
+        
+        self.food_artists = []
+        
+        # Draw current food
+        for food in self.world.food:
+            food_circle = plt.Circle(
+                (food.x, food.y), 0.8,
+                color='green', ec='darkgreen', linewidth=1.5, zorder=5, alpha=0.7
+            )
+            self.ax.add_patch(food_circle)
+            self.food_artists.append(food_circle)
             
     def update(self, frame):
         """
@@ -98,13 +116,17 @@ class AntWorldVisualizer:
             xs, ys = zip(*self.ant_histories[i])
             self.trail_lines[i].set_data(xs, ys)
         
+        # Draw food
+        self.draw_food()
+        
         # Update statistics
         if self.stats_text:
             self.stats_text.remove()
         
         stats_str = f"Step: {frame + 1}\n"
+        stats_str += f"Food: {len(self.world.food)}\n"
         for i, ant in enumerate(self.world.ants):
-            stats_str += f"Ant {i+1}: pos=({ant.x},{ant.y}) dist={ant.distance_traveled:.1f}\n"
+            stats_str += f"Ant {i+1}: pos=({ant.x},{ant.y}) hp={ant.health:.0f} food={ant.food_collected}\n"
         
         self.stats_text = self.ax.text(
             0.02, 0.98, stats_str,
@@ -114,7 +136,10 @@ class AntWorldVisualizer:
             bbox=dict(boxstyle='round', facecolor='white', alpha=0.8)
         )
         
-        return self.ant_artists + self.trail_lines + [self.stats_text]
+        artists = self.ant_artists + self.trail_lines + [self.stats_text]
+        if hasattr(self, 'food_artists'):
+            artists.extend(self.food_artists)
+        return artists
     
     def animate(self, num_steps=100, interval=50):
         """
@@ -150,7 +175,7 @@ class AntWorldVisualizer:
         plt.show()
 
 
-def visualize_simulation(num_ants=5, num_steps=200, world_width=50, world_height=50, interval=50):
+def visualize_simulation(num_ants=5, num_steps=200, world_width=50, world_height=50, interval=0):
     """
     Run a visualized ant world simulation.
     
@@ -159,7 +184,7 @@ def visualize_simulation(num_ants=5, num_steps=200, world_width=50, world_height
         num_steps: Number of simulation steps
         world_width: Width of the world
         world_height: Height of the world
-        interval: Milliseconds between animation frames
+        interval: Milliseconds between animation frames (0 = as fast as possible)
     """
     from world import World
     from ant import Ant
@@ -168,6 +193,7 @@ def visualize_simulation(num_ants=5, num_steps=200, world_width=50, world_height
     print(f"World size: {world_width}x{world_height}")
     print(f"Number of ants: {num_ants}")
     print(f"Simulation steps: {num_steps}")
+    print(f"Animation interval: {interval}ms")
     print("\nCreating ants...")
     
     # Create world
@@ -181,6 +207,7 @@ def visualize_simulation(num_ants=5, num_steps=200, world_width=50, world_height
         world.add_ant(ant)
         print(f"  Ant {i+1} created at position ({x}, {y})")
     
+    print(f"\nInitial food placed: {len(world.food)}")
     print("\nStarting visualization...")
     print("Close the window to end the simulation.\n")
     
