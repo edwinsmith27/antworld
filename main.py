@@ -1,6 +1,6 @@
 """Main simulation runner for ant world."""
 from world import World
-from ant import Ant
+from ant import Ant, save_successful_networks, load_networks, get_latest_saved_networks
 import numpy as np
 
 
@@ -14,7 +14,7 @@ class EvolutionarySimulation:
     MIN_SURVIVAL_RATE = 0.25  # Minimum 25% of population survives each generation
     PROGRESS_REPORT_INTERVAL = 50  # Report progress every N steps
     
-    def __init__(self, initial_ants=20, world_width=500, world_height=500):
+    def __init__(self, initial_ants=20, world_width=500, world_height=500, load_saved=True):
         """
         Initialize the evolutionary simulation.
         
@@ -22,6 +22,7 @@ class EvolutionarySimulation:
             initial_ants: Number of ants to start with
             world_width: Width of the world (max 500)
             world_height: Height of the world (max 500)
+            load_saved: Whether to load previously saved networks
         """
         self.world = World(width=world_width, height=world_height)
         self.generation = 0
@@ -32,16 +33,40 @@ class EvolutionarySimulation:
         self.min_fitness_threshold = max(self.MIN_FITNESS_THRESHOLD, max_distance)
         self.initial_ant_count = initial_ants
         self.running = True
+        self.load_saved = load_saved
         
         # Create initial population
         self._create_initial_population()
         
     def _create_initial_population(self):
         """Create the initial population of ants."""
+        # Try to load saved networks if enabled
+        saved_networks = []
+        if self.load_saved:
+            latest_file = get_latest_saved_networks()
+            if latest_file:
+                try:
+                    saved_networks = load_networks(latest_file)
+                    # Check if networks are compatible (same input size)
+                    if saved_networks and saved_networks[0].input_size != 5:
+                        print(f"Warning: Saved networks have incompatible input size ({saved_networks[0].input_size}), creating new population")
+                        saved_networks = []
+                    else:
+                        print(f"Loaded {len(saved_networks)} saved networks for initial population")
+                except Exception as e:
+                    print(f"Failed to load saved networks: {e}")
+        
         for i in range(self.initial_ant_count):
             x = np.random.randint(0, self.world.width)
             y = np.random.randint(0, self.world.height)
             ant = Ant(x=x, y=y)
+            
+            # Use saved network if available, otherwise use random
+            if i < len(saved_networks):
+                ant.brain = saved_networks[i].copy()
+                # Apply slight mutation to add variety
+                ant.brain.mutate(mutation_rate=0.05, mutation_scale=0.05)
+            
             self.world.add_ant(ant)
     
     def _calculate_fitness(self, ant):
@@ -94,6 +119,10 @@ class EvolutionarySimulation:
         
         print(f"  Survivors: {len(survivors)}/{len(self.world.ants)}")
         
+        # Save successful networks to disk
+        if survivors:
+            save_successful_networks(survivors, generation=self.generation, step=self.step_count)
+        
         # Create next generation
         new_ants = []
         
@@ -126,6 +155,11 @@ class EvolutionarySimulation:
             new_ants.append(child)
         
         # Replace old population with new generation
+        # Clean up old ants to prevent memory leaks
+        for old_ant in self.world.ants:
+            old_ant.world = None
+            old_ant.brain = None
+        
         self.world.ants = new_ants
         for ant in self.world.ants:
             ant.world = self.world
@@ -178,7 +212,7 @@ class EvolutionarySimulation:
             print("\nNo ants survived")
 
 
-def run_simulation(num_ants=20, world_width=500, world_height=500):
+def run_simulation(num_ants=20, world_width=500, world_height=500, load_saved=True):
     """
     Run the evolutionary ant world simulation.
     
@@ -186,6 +220,7 @@ def run_simulation(num_ants=20, world_width=500, world_height=500):
         num_ants: Number of ants to start with
         world_width: Width of the world (max 500)
         world_height: Height of the world (max 500)
+        load_saved: Whether to load previously saved networks
     """
     # Ensure world size doesn't exceed maximum
     world_width = min(world_width, 500)
@@ -194,7 +229,8 @@ def run_simulation(num_ants=20, world_width=500, world_height=500):
     sim = EvolutionarySimulation(
         initial_ants=num_ants,
         world_width=world_width,
-        world_height=world_height
+        world_height=world_height,
+        load_saved=load_saved
     )
     sim.run()
 

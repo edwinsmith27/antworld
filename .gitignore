@@ -18,3 +18,9 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Saved neural networks (generated during simulation)
+saved_networks/*.json
+
+# Log files
+*.log

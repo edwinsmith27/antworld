@@ -1,8 +1,11 @@
 """Unit tests for ant world simulation."""
 import unittest
 import numpy as np
-from world import World
-from ant import Ant, NeuralNetwork
+import os
+import json
+import tempfile
+from world import World, Food
+from ant import Ant, NeuralNetwork, save_successful_networks, load_networks
 
 
 class TestWorld(unittest.TestCase):
@@ -14,6 +17,11 @@ class TestWorld(unittest.TestCase):
         self.assertEqual(world.width, 50)
         self.assertEqual(world.height, 50)
         self.assertEqual(len(world.ants), 0)
+    
+    def test_initial_food_placement(self):
+        """Test initial food is placed in the world."""
+        world = World(width=50, height=50, initial_food_count=10)
+        self.assertEqual(len(world.food), 10)
     
     def test_add_ant(self):
         """Test adding ant to world."""
@@ -33,6 +41,28 @@ class TestWorld(unittest.TestCase):
         self.assertFalse(world.is_valid_position(5, -1))
         self.assertFalse(world.is_valid_position(10, 5))
         self.assertFalse(world.is_valid_position(5, 10))
+    
+    def test_food_collision(self):
+        """Test ant collecting food."""
+        world = World(width=50, height=50, initial_food_count=0)
+        ant = Ant(x=25, y=25)
+        world.add_ant(ant)
+        
+        # Reduce ant's health so it can benefit from food
+        ant.health = 50
+        initial_health = ant.health
+        
+        # Place food near ant
+        food = Food(x=25, y=25, energy=50)
+        world.food.append(food)
+        
+        # Check collision
+        world.check_food_collision(ant)
+        
+        # Verify food was collected
+        self.assertEqual(len(world.food), 0)
+        self.assertEqual(ant.food_collected, 1)
+        self.assertGreater(ant.health, initial_health)
 
 
 class TestNeuralNetwork(unittest.TestCase):
@@ -40,17 +70,17 @@ class TestNeuralNetwork(unittest.TestCase):
     
     def test_neural_network_creation(self):
         """Test neural network is created with correct dimensions."""
-        nn = NeuralNetwork(input_size=4, hidden_size=8, output_size=4)
-        self.assertEqual(nn.input_size, 4)
+        nn = NeuralNetwork(input_size=5, hidden_size=8, output_size=4)
+        self.assertEqual(nn.input_size, 5)
         self.assertEqual(nn.hidden_size, 8)
         self.assertEqual(nn.output_size, 4)
-        self.assertEqual(nn.weights_input_hidden.shape, (4, 8))
+        self.assertEqual(nn.weights_input_hidden.shape, (5, 8))
         self.assertEqual(nn.weights_hidden_output.shape, (8, 4))
     
     def test_forward_pass(self):
         """Test neural network forward pass."""
-        nn = NeuralNetwork(input_size=4, hidden_size=8, output_size=4)
-        inputs = np.array([0.5, 0.5, 0.5, 0.5])
+        nn = NeuralNetwork(input_size=5, hidden_size=8, output_size=4)
+        inputs = np.array([0.5, 0.5, 0.5, 0.5, 0.5])
         output = nn.forward(inputs)
         self.assertEqual(output.shape, (4,))
         # Check output sums to 1 (softmax property)
@@ -76,6 +106,25 @@ class TestNeuralNetwork(unittest.TestCase):
         # Check that they are independent (modifying one doesn't affect the other)
         nn.weights_input_hidden[0, 0] = 999.0
         self.assertNotEqual(nn.weights_input_hidden[0, 0], nn_copy.weights_input_hidden[0, 0])
+    
+    def test_to_dict_and_from_dict(self):
+        """Test neural network serialization and deserialization."""
+        nn = NeuralNetwork(input_size=5, hidden_size=8, output_size=4)
+        
+        # Convert to dict
+        nn_dict = nn.to_dict()
+        
+        # Check dict structure
+        self.assertIn('input_size', nn_dict)
+        self.assertIn('weights_input_hidden', nn_dict)
+        
+        # Convert back from dict
+        nn_restored = NeuralNetwork.from_dict(nn_dict)
+        
+        # Check that restored network is identical
+        self.assertEqual(nn.input_size, nn_restored.input_size)
+        self.assertTrue(np.array_equal(nn.weights_input_hidden, nn_restored.weights_input_hidden))
+        self.assertTrue(np.array_equal(nn.weights_hidden_output, nn_restored.weights_hidden_output))
 
 
 class TestAnt(unittest.TestCase):
@@ -95,7 +144,7 @@ class TestAnt(unittest.TestCase):
         ant = Ant(x=50, y=50)
         world.add_ant(ant)
         sensors = ant.sense()
-        self.assertEqual(sensors.shape, (4,))
+        self.assertEqual(sensors.shape, (5,))
         self.assertEqual(sensors[0], 0.5)  # x position normalized
         self.assertEqual(sensors[1], 0.5)  # y position normalized
     
@@ -140,6 +189,54 @@ class TestAnt(unittest.TestCase):
         initial_steps = ant.steps_taken
         ant.step()
         self.assertEqual(ant.steps_taken, initial_steps + 1)
+    
+    def test_distance_to_food_sensor(self):
+        """Test ant can sense distance to food."""
+        world = World(width=100, height=100, initial_food_count=0)
+        ant = Ant(x=50, y=50)
+        world.add_ant(ant)
+        
+        # Place food at a known location
+        food = Food(x=60, y=60, energy=50)
+        world.food.append(food)
+        
+        # Get sensor inputs
+        sensors = ant.sense()
+        
+        # Check that distance to food sensor is populated (index 4)
+        self.assertGreater(sensors[4], 0.0)
+        self.assertLess(sensors[4], 1.0)
+
+
+class TestNetworkSaving(unittest.TestCase):
+    """Test cases for saving and loading neural networks."""
+    
+    def test_save_and_load_networks(self):
+        """Test saving and loading networks to/from disk."""
+        # Create temporary directory
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create some ants with different fitness
+            ants = []
+            for i in range(3):
+                ant = Ant(x=10*i, y=10*i)
+                ant.distance_traveled = 100.0 * (i + 1)
+                ant.food_collected = i
+                ants.append(ant)
+            
+            # Save networks
+            filename = save_successful_networks(ants, generation=1, step=100, save_dir=tmpdir)
+            self.assertIsNotNone(filename)
+            self.assertTrue(os.path.exists(filename))
+            
+            # Load networks
+            loaded_networks = load_networks(filename)
+            self.assertEqual(len(loaded_networks), 3)
+            
+            # Verify networks are functional
+            for network in loaded_networks:
+                inputs = np.array([0.5, 0.5, 0.5, 0.5, 0.5])
+                output = network.forward(inputs)
+                self.assertEqual(output.shape, (4,))
 
 
 if __name__ == "__main__":
