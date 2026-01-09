@@ -63,6 +63,19 @@ class TestNeuralNetwork(unittest.TestCase):
         nn.mutate(mutation_rate=1.0, mutation_scale=0.1)
         # Check that weights have changed
         self.assertFalse(np.array_equal(original_weights, nn.weights_input_hidden))
+    
+    def test_copy(self):
+        """Test neural network deep copy."""
+        nn = NeuralNetwork()
+        nn_copy = nn.copy()
+        
+        # Check that copies have same values
+        self.assertTrue(np.array_equal(nn.weights_input_hidden, nn_copy.weights_input_hidden))
+        self.assertTrue(np.array_equal(nn.weights_hidden_output, nn_copy.weights_hidden_output))
+        
+        # Check that they are independent (modifying one doesn't affect the other)
+        nn.weights_input_hidden[0, 0] = 999.0
+        self.assertNotEqual(nn.weights_input_hidden[0, 0], nn_copy.weights_input_hidden[0, 0])
 
 
 class TestAnt(unittest.TestCase):

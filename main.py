@@ -22,7 +22,9 @@ class EvolutionarySimulation:
         self.generation = 0
         self.step_count = 0
         self.generation_length = 200  # Steps per generation
-        self.min_fitness_threshold = 10.0  # Minimum distance to survive
+        # Calculate minimum fitness based on world size (5% of max possible distance)
+        max_distance = min(world_width, world_height) * 0.1
+        self.min_fitness_threshold = max(10.0, max_distance)
         self.initial_ant_count = initial_ants
         self.running = True
         
@@ -72,10 +74,17 @@ class EvolutionarySimulation:
         print(f"  Average fitness: {np.mean([f for _, f in fitness_scores]):.2f}")
         print(f"  Worst fitness: {fitness_scores[-1][1]:.2f}")
         
-        # Select survivors (top 50% or those above threshold)
+        # Select survivors (ensure minimum survivor count, then apply fitness threshold)
         survivors = []
-        for ant, fitness in fitness_scores:
-            if fitness >= self.min_fitness_threshold or len(survivors) < max(2, len(fitness_scores) // 4):
+        min_survivors = max(2, len(fitness_scores) // 4)  # At least 25% survive or minimum 2
+        
+        # First, guarantee minimum survivors from top performers
+        for i in range(min(min_survivors, len(fitness_scores))):
+            survivors.append(fitness_scores[i][0])
+        
+        # Then add any additional ants that meet the fitness threshold
+        for ant, fitness in fitness_scores[min_survivors:]:
+            if fitness >= self.min_fitness_threshold:
                 survivors.append(ant)
         
         print(f"  Survivors: {len(survivors)}/{len(self.world.ants)}")
@@ -90,8 +99,8 @@ class EvolutionarySimulation:
                 x=np.random.randint(0, self.world.width),
                 y=np.random.randint(0, self.world.height)
             )
-            # Copy the brain from survivor
-            new_ant.brain = ant.brain
+            # Deep copy the brain from survivor
+            new_ant.brain = ant.brain.copy()
             new_ants.append(new_ant)
         
         # Create offspring from survivors through mutation
@@ -106,10 +115,7 @@ class EvolutionarySimulation:
             )
             
             # Copy parent's brain and mutate
-            child.brain.weights_input_hidden = parent.brain.weights_input_hidden.copy()
-            child.brain.weights_hidden_output = parent.brain.weights_hidden_output.copy()
-            child.brain.bias_hidden = parent.brain.bias_hidden.copy()
-            child.brain.bias_output = parent.brain.bias_output.copy()
+            child.brain = parent.brain.copy()
             child.learn()  # Apply mutation
             
             new_ants.append(child)
