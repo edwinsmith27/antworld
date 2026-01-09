@@ -11,6 +11,8 @@ class EvolutionarySimulation:
     GENERATION_LENGTH = 200  # Steps per generation
     FITNESS_THRESHOLD_RATIO = 0.1  # Fitness threshold as ratio of world size
     MIN_FITNESS_THRESHOLD = 10.0  # Absolute minimum fitness threshold
+    MIN_SURVIVAL_RATE = 0.25  # Minimum 25% of population survives each generation
+    PROGRESS_REPORT_INTERVAL = 50  # Report progress every N steps
     
     def __init__(self, initial_ants=20, world_width=500, world_height=500):
         """
@@ -79,7 +81,7 @@ class EvolutionarySimulation:
         
         # Select survivors (ensure minimum survivor count, then apply fitness threshold)
         survivors = []
-        min_survivors = max(2, len(fitness_scores) // 4)  # At least 25% survive or minimum 2
+        min_survivors = max(2, int(len(fitness_scores) * self.MIN_SURVIVAL_RATE))
         
         # First, guarantee minimum survivors from top performers
         for i in range(min(min_survivors, len(fitness_scores))):
@@ -148,7 +150,7 @@ class EvolutionarySimulation:
                     self.step_count += 1
                     
                     # Print progress periodically
-                    if (step + 1) % 50 == 0:
+                    if (step + 1) % self.PROGRESS_REPORT_INTERVAL == 0:
                         alive_count = len(self.world.ants)
                         if alive_count > 0:
                             avg_distance = np.mean([ant.distance_traveled for ant in self.world.ants])
