@@ -22,6 +22,9 @@ class Food:
 class World:
     """A 2D world space where ants can navigate."""
     
+    # Class constants
+    FOOD_COLLECTION_DISTANCE = 1.5  # Distance threshold for collecting food
+    
     def __init__(self, width=100, height=100, food_spawn_rate=0.1, initial_food_count=20):
         """
         Initialize the world.
@@ -66,9 +69,9 @@ class World:
     def check_food_collision(self, ant):
         """Check if an ant is at a food location and consume it."""
         for food in self.food[:]:
-            # Check if ant is close enough to food (within 1 unit)
+            # Check if ant is close enough to food
             distance = np.sqrt((ant.x - food.x)**2 + (ant.y - food.y)**2)
-            if distance < 1.5:
+            if distance < self.FOOD_COLLECTION_DISTANCE:
                 ant.health = min(ant.max_health, ant.health + food.energy)
                 ant.food_collected += 1
                 self.food.remove(food)

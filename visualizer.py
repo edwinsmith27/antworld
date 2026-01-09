@@ -125,8 +125,16 @@ class AntWorldVisualizer:
         
         stats_str = f"Step: {frame + 1}\n"
         stats_str += f"Food: {len(self.world.food)}\n"
-        for i, ant in enumerate(self.world.ants):
+        stats_str += f"Ants: {len(self.world.ants)}\n"
+        
+        # Show details for first 5 ants only to avoid clutter
+        max_ants_to_display = min(5, len(self.world.ants))
+        for i in range(max_ants_to_display):
+            ant = self.world.ants[i]
             stats_str += f"Ant {i+1}: pos=({ant.x},{ant.y}) hp={ant.health:.0f} food={ant.food_collected}\n"
+        
+        if len(self.world.ants) > max_ants_to_display:
+            stats_str += f"... and {len(self.world.ants) - max_ants_to_display} more ants\n"
         
         self.stats_text = self.ax.text(
             0.02, 0.98, stats_str,
