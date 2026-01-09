@@ -112,44 +112,67 @@ def step_simulation():
     """Advance the simulation by one step."""
     with simulation_lock:
         if simulation_state['world'] and simulation_state['running']:
-            simulation_state['world'].step()
-            simulation_state['step'] += 1
-            # Get state and return it
-            world = simulation_state['world']
-            ants_data = []
-            
-            for i, ant in enumerate(world.ants):
-                ants_data.append({
-                    'id': i,
-                    'x': float(ant.x),
-                    'y': float(ant.y),
-                    'distance_traveled': float(ant.distance_traveled),
-                    'steps_taken': ant.steps_taken,
-                    'health': float(ant.health),
-                    'max_health': float(ant.max_health),
-                    'food_collected': ant.food_collected
+            try:
+                simulation_state['world'].step()
+                simulation_state['step'] += 1
+                # Get state and return it
+                world = simulation_state['world']
+                ants_data = []
+                
+                for i, ant in enumerate(world.ants):
+                    # Ensure values are valid (not NaN or infinity)
+                    x = float(ant.x) if np.isfinite(ant.x) else 0.0
+                    y = float(ant.y) if np.isfinite(ant.y) else 0.0
+                    distance = float(ant.distance_traveled) if np.isfinite(ant.distance_traveled) else 0.0
+                    health = float(ant.health) if np.isfinite(ant.health) else 0.0
+                    
+                    ants_data.append({
+                        'id': i,
+                        'x': x,
+                        'y': y,
+                        'distance_traveled': distance,
+                        'steps_taken': ant.steps_taken,
+                        'health': health,
+                        'max_health': float(ant.max_health),
+                        'food_collected': ant.food_collected
+                    })
+                
+                # Get food data
+                food_data = []
+                for food in world.food:
+                    food_x = float(food.x) if np.isfinite(food.x) else 0.0
+                    food_y = float(food.y) if np.isfinite(food.y) else 0.0
+                    food_data.append({
+                        'x': food_x,
+                        'y': food_y,
+                        'energy': float(food.energy)
+                    })
+                
+                return jsonify({
+                    'running': simulation_state['running'],
+                    'step': simulation_state['step'],
+                    'ants': ants_data,
+                    'food': food_data,
+                    'world': {
+                        'width': world.width,
+                        'height': world.height
+                    },
+                    'config': simulation_state['config']
                 })
-            
-            # Get food data
-            food_data = []
-            for food in world.food:
-                food_data.append({
-                    'x': float(food.x),
-                    'y': float(food.y),
-                    'energy': float(food.energy)
+            except Exception as e:
+                log.error(f"Error in simulation step {simulation_state['step']}: {str(e)}")
+                # Don't stop the simulation, just log the error and continue
+                return jsonify({
+                    'running': simulation_state['running'],
+                    'step': simulation_state['step'],
+                    'ants': [],
+                    'food': [],
+                    'world': {
+                        'width': simulation_state['config']['world_width'],
+                        'height': simulation_state['config']['world_height']
+                    },
+                    'config': simulation_state['config']
                 })
-            
-            return jsonify({
-                'running': simulation_state['running'],
-                'step': simulation_state['step'],
-                'ants': ants_data,
-                'food': food_data,
-                'world': {
-                    'width': world.width,
-                    'height': world.height
-                },
-                'config': simulation_state['config']
-            })
         return jsonify({'error': 'Simulation not running'})
 
 
