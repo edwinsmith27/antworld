@@ -1,22 +1,28 @@
 # antworld
 
-A neural network simulation for ant world where ants with neural networks learn to navigate their environment.
+A neural network simulation for ant world where ants with neural networks learn to navigate their environment through evolution.
 
 ## Overview
 
-Ant World is a simulation environment where:
-- **World**: A 2D space where ants exist and navigate
+Ant World is an evolutionary simulation environment where:
+- **World**: A 2D space (up to 500x500) where ants exist and navigate
 - **Ants**: Each ant has its own neural network "brain" that controls its behavior
-- **Learning**: Ants can learn and improve through neural network mutation
+- **Evolution**: Ants compete for survival based on fitness (distance traveled)
+- **Natural Selection**: Unsuccessful ants die out, successful ants reproduce with mutations
+- **Continuous Learning**: The simulation runs indefinitely until manually stopped
 
 ## Features
 
-- 2D world environment with configurable dimensions
+- Large 2D world environment (up to 500x500)
 - Ants with neural network brains for decision making
 - Basic sensor inputs (position, distance to edges)
 - Movement system with boundary collision
-- Learning mechanism through neural network mutation
-- Statistics tracking (distance traveled, steps taken)
+- **Evolutionary algorithm** with fitness-based selection
+- **Generational learning** through neural network mutation
+- **Continuous simulation** that runs until user interrupts
+- **Death mechanism** for low-performing ants
+- **Reproduction system** where successful ants pass on their neural networks
+- Detailed statistics tracking per generation (best/average/worst fitness, survivors)
 
 ## Installation
 
@@ -47,10 +53,20 @@ python -m unittest test_antworld.py
 
 ## How It Works
 
-1. **World Creation**: A 2D grid world is created with specified dimensions
-2. **Ant Creation**: Multiple ants are spawned at random positions, each with a random neural network
-3. **Simulation Loop**: Each step, ants:
+1. **World Creation**: A large 2D grid world (default 500x500) is created
+2. **Initial Population**: 20 ants are spawned at random positions, each with a random neural network
+3. **Generation Loop**: Each generation runs for 200 steps where ants:
    - Sense their environment (position, distances to edges)
    - Process inputs through their neural network
    - Select and perform an action (move up/down/left/right)
-4. **Learning**: Neural networks can be mutated to explore different behaviors
+   - Track fitness based on distance traveled
+4. **Natural Selection**: At the end of each generation:
+   - Ants are evaluated based on their fitness (distance traveled)
+   - Low-performing ants die out (below fitness threshold or bottom quartile)
+   - Successful ants survive to the next generation
+5. **Reproduction**: The population is replenished by:
+   - Keeping survivors with their learned behaviors
+   - Creating offspring from survivors with mutated neural networks
+6. **Evolution**: Over many generations, the population evolves more successful navigation strategies
+
+The simulation runs continuously, allowing you to observe the evolutionary process in real-time until you stop it with Ctrl+C.
