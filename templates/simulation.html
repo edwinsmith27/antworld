@@ -265,6 +265,7 @@
         <button class="btn-start" onclick="startSimulation()">▶ Start</button>
         <button class="btn-stop" onclick="stopSimulation()">⏸ Stop</button>
         <button class="btn-reset" onclick="resetSimulation()">🔄 Reset</button>
+        <button class="btn-config" id="toggleVizBtn" onclick="toggleVisualization()">👁️ Hide Visualization</button>
     </div>
 
     <div class="main-content">
@@ -345,6 +346,7 @@
         let simulationInterval = null;
         let config = null;
         let isRunning = false;
+        let visualizationEnabled = true;
 
         // Ant colors (rainbow)
         const colorPalette = [
@@ -588,7 +590,54 @@
             ctx.strokeRect(0, 0, config.world_width * scale, config.world_height * scale);
         }
 
+        function toggleVisualization() {
+            visualizationEnabled = !visualizationEnabled;
+            const btn = document.getElementById('toggleVizBtn');
+            const canvasContainer = document.querySelector('.canvas-container');
+            
+            if (visualizationEnabled) {
+                btn.textContent = '👁️ Hide Visualization';
+                canvasContainer.style.display = 'block';
+            } else {
+                btn.textContent = '👁️ Show Visualization';
+                canvasContainer.style.display = 'none';
+            }
+        }
+
         function updateVisualization(state) {
+            // Update stats (always, even if visualization is hidden)
+            document.getElementById('stepCount').textContent = state.step;
+            document.getElementById('antCount').textContent = state.ants.length;
+            const worldWidth = state.world.width || (config ? config.world_width : 50);
+            const worldHeight = state.world.height || (config ? config.world_height : 50);
+            document.getElementById('worldSize').textContent = `${worldWidth} × ${worldHeight}`;
+            document.getElementById('foodCount').textContent = state.food ? state.food.length : 0;
+
+            // Update ant list
+            if (state.ants.length > 0) {
+                const antListHtml = state.ants.map((ant, index) => `
+                    <div class="ant-item" style="border-left-color: ${getAntColor(index)}">
+                        <h4>🐜 Ant ${index + 1}</h4>
+                        <div class="ant-info">
+                            Position: (${ant.x.toFixed(1)}, ${ant.y.toFixed(1)})<br>
+                            Distance: ${ant.distance_traveled.toFixed(2)}<br>
+                            Steps: ${ant.steps_taken}<br>
+                            Health: ${ant.health.toFixed(1)}/${ant.max_health.toFixed(1)}<br>
+                            Food: ${ant.food_collected}
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('antList').innerHTML = antListHtml;
+            } else {
+                document.getElementById('antList').innerHTML = '<p style="color: #aaa; text-align: center; padding: 20px;">Click Start to begin simulation</p>';
+            }
+
+            // Skip canvas rendering if visualization is disabled
+            if (!visualizationEnabled) {
+                return;
+            }
+
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -667,30 +716,6 @@
                 ctx.textBaseline = 'middle';
                 ctx.fillText(index + 1, ant.x * scale, ant.y * scale);
             });
-
-            // Update stats
-            document.getElementById('stepCount').textContent = state.step;
-            document.getElementById('antCount').textContent = state.ants.length;
-            document.getElementById('worldSize').textContent = `${worldWidth} × ${worldHeight}`;
-            document.getElementById('foodCount').textContent = state.food ? state.food.length : 0;
-
-            // Update ant list
-            if (state.ants.length > 0) {
-                const antListHtml = state.ants.map((ant, index) => `
-                    <div class="ant-item" style="border-left-color: ${getAntColor(index)}">
-                        <h4>🐜 Ant ${index + 1}</h4>
-                        <div class="ant-info">
-                            Position: (${ant.x.toFixed(1)}, ${ant.y.toFixed(1)})<br>
-                            Distance: ${ant.distance_traveled.toFixed(2)}<br>
-                            Steps: ${ant.steps_taken}
-                        </div>
-                    </div>
-                `).join('');
-                
-                document.getElementById('antList').innerHTML = antListHtml;
-            } else {
-                document.getElementById('antList').innerHTML = '<p style="color: #aaa; text-align: center; padding: 20px;">Click Start to begin simulation</p>';
-            }
         }
 
         function goToConfig() {
