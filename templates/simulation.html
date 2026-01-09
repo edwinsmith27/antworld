@@ -304,9 +304,17 @@
                 <div class="config-item">
                     <label>
                         Speed (ms): 
-                        <span class="config-value" id="speedValue">50</span>
+                        <span class="config-value" id="speedValue">0</span>
                     </label>
-                    <input type="range" id="speed" min="10" max="200" value="50" onchange="updateConfig()">
+                    <input type="range" id="speed" min="0" max="100" value="0" onchange="updateConfig()">
+                </div>
+
+                <div class="config-item">
+                    <label>
+                        Steps Per Frame: 
+                        <span class="config-value" id="stepsPerFrameValue">1</span>
+                    </label>
+                    <input type="range" id="stepsPerFrame" min="1" max="50" value="1" onchange="updateStepsPerFrame()">
                 </div>
             </div>
 
@@ -357,6 +365,8 @@
         let config = null;
         let isRunning = false;
         let visualizationEnabled = true;
+        let stepsPerFrame = 1;
+        let updateCounter = 0;
 
         // Ant colors (rainbow)
         const colorPalette = [
@@ -545,16 +555,24 @@
 
         async function stepSimulation() {
             try {
-                const response = await fetch('/api/step', { method: 'POST' });
-                const state = await response.json();
-                
-                if (state.error) {
-                    console.log('Simulation error:', state.error);
-                    await stopSimulation();
-                    return;
-                }
+                // Run multiple steps per frame for speed
+                for (let i = 0; i < stepsPerFrame; i++) {
+                    const response = await fetch('/api/step', { method: 'POST' });
+                    const state = await response.json();
+                    
+                    if (state.error) {
+                        console.log('Simulation error:', state.error);
+                        await stopSimulation();
+                        return;
+                    }
 
-                updateVisualization(state);
+                    // Only update visualization on the last step
+                    if (i === stepsPerFrame - 1) {
+                        updateCounter++;
+                        // Update stats every frame, but ant list less frequently
+                        updateVisualization(state, updateCounter % 10 === 0);
+                    }
+                }
             } catch (error) {
                 console.error('Error stepping simulation:', error);
                 // Don't stop simulation on transient errors, just log them
@@ -608,6 +626,12 @@
             ctx.strokeRect(0, 0, config.world_width * scale, config.world_height * scale);
         }
 
+        function updateStepsPerFrame() {
+            stepsPerFrame = parseInt(document.getElementById('stepsPerFrame').value);
+            document.getElementById('stepsPerFrameValue').textContent = stepsPerFrame;
+            console.log('Steps per frame updated to:', stepsPerFrame);
+        }
+
         function toggleVisualization() {
             visualizationEnabled = !visualizationEnabled;
             const btn = document.getElementById('toggleVizBtn');
@@ -622,7 +646,7 @@
             }
         }
 
-        function updateVisualization(state) {
+        function updateVisualization(state, updateAntList = true) {
             // Update stats (always, even if visualization is hidden)
             document.getElementById('stepCount').textContent = state.step;
             document.getElementById('antCount').textContent = state.ants.length;
@@ -638,8 +662,8 @@
             }
             document.getElementById('bestFitness').textContent = bestFitness.toFixed(1);
 
-            // Update ant list
-            if (state.ants.length > 0) {
+            // Update ant list (less frequently for performance)
+            if (updateAntList && state.ants.length > 0) {
                 const antListHtml = state.ants.map((ant, index) => `
                     <div class="ant-item" style="border-left-color: ${getAntColor(index)}">
                         <h4>🐜 Ant ${index + 1}</h4>
@@ -748,7 +772,7 @@
         // Initialize slider event listeners
         function initializeSliders() {
             console.log('Initializing sliders...');
-            const sliders = ['numAnts', 'worldWidth', 'worldHeight', 'speed'];
+            const sliders = ['numAnts', 'worldWidth', 'worldHeight', 'speed', 'stepsPerFrame'];
             sliders.forEach(sliderId => {
                 const slider = document.getElementById(sliderId);
                 const valueSpan = document.getElementById(sliderId + 'Value');
