@@ -2,12 +2,15 @@
 from world import World
 from ant import Ant
 import numpy as np
-import signal
-import sys
 
 
 class EvolutionarySimulation:
     """Manages the evolutionary ant world simulation."""
+    
+    # Simulation constants
+    GENERATION_LENGTH = 200  # Steps per generation
+    FITNESS_THRESHOLD_RATIO = 0.1  # Fitness threshold as ratio of world size
+    MIN_FITNESS_THRESHOLD = 10.0  # Absolute minimum fitness threshold
     
     def __init__(self, initial_ants=20, world_width=500, world_height=500):
         """
@@ -21,10 +24,10 @@ class EvolutionarySimulation:
         self.world = World(width=world_width, height=world_height)
         self.generation = 0
         self.step_count = 0
-        self.generation_length = 200  # Steps per generation
-        # Calculate minimum fitness based on world size (5% of max possible distance)
-        max_distance = min(world_width, world_height) * 0.1
-        self.min_fitness_threshold = max(10.0, max_distance)
+        self.generation_length = self.GENERATION_LENGTH
+        # Calculate minimum fitness based on world size
+        max_distance = min(world_width, world_height) * self.FITNESS_THRESHOLD_RATIO
+        self.min_fitness_threshold = max(self.MIN_FITNESS_THRESHOLD, max_distance)
         self.initial_ant_count = initial_ants
         self.running = True
         
