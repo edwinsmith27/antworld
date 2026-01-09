@@ -183,7 +183,7 @@ class AntWorldVisualizer:
         plt.show()
 
 
-def visualize_simulation(num_ants=5, num_steps=200, world_width=50, world_height=50, interval=0):
+def visualize_simulation(num_ants=5, num_steps=200, world_width=50, world_height=50, interval=0, enable_visualization=True):
     """
     Run a visualized ant world simulation.
     
@@ -193,6 +193,7 @@ def visualize_simulation(num_ants=5, num_steps=200, world_width=50, world_height
         world_width: Width of the world
         world_height: Height of the world
         interval: Milliseconds between animation frames (0 = as fast as possible)
+        enable_visualization: Whether to enable visual display (False = faster simulation)
     """
     from world import World
     from ant import Ant
@@ -202,6 +203,7 @@ def visualize_simulation(num_ants=5, num_steps=200, world_width=50, world_height
     print(f"Number of ants: {num_ants}")
     print(f"Simulation steps: {num_steps}")
     print(f"Animation interval: {interval}ms")
+    print(f"Visualization: {'Enabled' if enable_visualization else 'Disabled (faster)'}")
     print("\nCreating ants...")
     
     # Create world
@@ -216,9 +218,28 @@ def visualize_simulation(num_ants=5, num_steps=200, world_width=50, world_height
         print(f"  Ant {i+1} created at position ({x}, {y})")
     
     print(f"\nInitial food placed: {len(world.food)}")
-    print("\nStarting visualization...")
-    print("Close the window to end the simulation.\n")
     
-    # Create visualizer and run animation
-    viz = AntWorldVisualizer(world)
-    viz.animate(num_steps=num_steps, interval=interval)
+    if enable_visualization:
+        print("\nStarting visualization...")
+        print("Close the window to end the simulation.\n")
+        
+        # Create visualizer and run animation
+        viz = AntWorldVisualizer(world)
+        viz.animate(num_steps=num_steps, interval=interval)
+    else:
+        print("\nRunning simulation without visualization (faster)...\n")
+        
+        # Run simulation without visualization
+        for step in range(num_steps):
+            world.step()
+            
+            # Print progress every 50 steps
+            if (step + 1) % 50 == 0 or step == num_steps - 1:
+                alive_ants = len(world.ants)
+                total_food = len(world.food)
+                avg_health = np.mean([ant.health for ant in world.ants]) if world.ants else 0
+                avg_distance = np.mean([ant.distance_traveled for ant in world.ants]) if world.ants else 0
+                print(f"Step {step + 1}/{num_steps} - Ants: {alive_ants}, Food: {total_food}, "
+                      f"Avg Health: {avg_health:.1f}, Avg Distance: {avg_distance:.1f}")
+        
+        print("\nSimulation complete!")

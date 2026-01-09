@@ -78,7 +78,7 @@ class World:
                 return True
         return False
     
-    def respawn_ant(self, dead_ant):
+    def respawn_ant(self, dead_ant=None):
         """Respawn an ant with a new neural network at a random position."""
         from ant import Ant
         x = np.random.randint(5, self.width - 5)
@@ -105,14 +105,26 @@ class World:
             if ant.health <= 0:
                 dead_ants.append(ant)
         
-        # Respawn dead ants and clean up properly
+        # Respawn dead ants and clean up properly to prevent memory leaks
         for dead_ant in dead_ants:
             self.ants.remove(dead_ant)
-            # Clean up references to prevent memory leaks
+            # Thorough cleanup to prevent memory leaks
             dead_ant.world = None
-            dead_ant.brain = None
+            if hasattr(dead_ant, 'brain') and dead_ant.brain is not None:
+                # Clear neural network weights
+                if hasattr(dead_ant.brain, 'weights_input_hidden'):
+                    dead_ant.brain.weights_input_hidden = None
+                if hasattr(dead_ant.brain, 'weights_hidden_output'):
+                    dead_ant.brain.weights_hidden_output = None
+                if hasattr(dead_ant.brain, 'bias_hidden'):
+                    dead_ant.brain.bias_hidden = None
+                if hasattr(dead_ant.brain, 'bias_output'):
+                    dead_ant.brain.bias_output = None
+                dead_ant.brain = None
+            # Explicitly delete the dead ant object
+            del dead_ant
             # Respawn new ant
-            new_ant = self.respawn_ant(dead_ant)
+            new_ant = self.respawn_ant(None)
             self.add_ant(new_ant)
             
     def is_valid_position(self, x, y):

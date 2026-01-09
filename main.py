@@ -158,7 +158,15 @@ class EvolutionarySimulation:
         # Clean up old ants to prevent memory leaks
         for old_ant in self.world.ants:
             old_ant.world = None
-            old_ant.brain = None
+            if old_ant.brain is not None:
+                # Clear neural network weights
+                old_ant.brain.weights_input_hidden = None
+                old_ant.brain.weights_hidden_output = None
+                old_ant.brain.bias_hidden = None
+                old_ant.brain.bias_output = None
+                old_ant.brain = None
+            # Delete reference
+            del old_ant
         
         self.world.ants = new_ants
         for ant in self.world.ants:

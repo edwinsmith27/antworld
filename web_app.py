@@ -16,13 +16,15 @@ simulation_state = {
     'running': False,
     'step': 0,
     'config': {
-        'num_ants': 5,
-        'world_width': 50,
-        'world_height': 50,
-        'speed': 50,  # milliseconds per step
-        'food_spawn_rate': 0.1,  # 10% chance per step
+        'num_ants': 20,
+        'world_width': 500,
+        'world_height': 500,
+        'speed': 0,  # milliseconds per step (0 = no delay)
+        'food_spawn_rate': 0.05,  # 5% chance per step
         'health_decay_rate': 0.5,  # health lost per step
-        'max_health': 100
+        'max_health': 100,
+        'initial_food_count': 50,  # Initial food items
+        'visualization_enabled': True  # Toggle visualization
     }
 }
 
@@ -63,7 +65,8 @@ def start_simulation():
         world = World(
             width=config['world_width'], 
             height=config['world_height'],
-            food_spawn_rate=config['food_spawn_rate']
+            food_spawn_rate=config.get('food_spawn_rate', 0.05),
+            initial_food_count=config.get('initial_food_count', 50)
         )
         
         # Create ants at random positions
